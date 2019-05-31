@@ -1232,7 +1232,7 @@ export default class Trx {
             return this.injectPromise(this.getTokenByID, tokenID);
 
         if (utils.isInteger(tokenID))
-            tokenID = tokenID.toString()
+            tokenID = tokenID.toString();
 
         if (!utils.isString(tokenID) || !tokenID.length)
             return callback('Invalid token ID provided');

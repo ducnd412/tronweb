@@ -127,7 +127,7 @@ export default class TransactionBuilder {
         this.tronWeb.fullNode.request('wallet/transferasset', {
             to_address: toHex(to),
             owner_address: toHex(from),
-            asset_name: fromUtf8(tokenID),
+            asset_id: tokenID,
             amount: parseInt(amount)
         }, 'post').then(transaction => resultManager(transaction, callback)).catch(err => callback(err));
     }
