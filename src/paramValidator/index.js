@@ -69,7 +69,7 @@ export default class Validator {
                     break;
 
                 case 'tokenId':
-                    if (!utils.isInteger(value) || !value.length) {
+                    if (!utils.isInteger(value)) {
                         no = true;
                     }
                     break;

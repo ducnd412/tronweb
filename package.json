@@ -1,6 +1,6 @@
 {
     "name": "mcashweb",
-    "version": "2.5.7-beta",
+    "version": "2.5.7-beta4",
     "description": "JavaScript SDK that encapsulates the TRON Node HTTP API",
     "main": "dist/TronWeb.node.js",
     "scripts": {
