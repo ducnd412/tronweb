@@ -18,7 +18,7 @@ const decodeOutput = (abi, output) => {
 
 export default class Method {
     constructor(contract, abi) {
-        this.tronWeb = contract.tronWeb;
+        this.tronWeb = contract.mcashWeb;
         this.contract = contract;
 
         this.abi = abi;
