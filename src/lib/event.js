@@ -1,4 +1,4 @@
-import TronWeb from 'index';
+import McashWeb from 'index';
 import utils from 'utils';
 import providers from "./providers";
 import querystring from "querystring";
@@ -6,7 +6,7 @@ import querystring from "querystring";
 export default class Event {
 
     constructor(tronWeb = false) {
-        if (!tronWeb || !(tronWeb instanceof TronWeb))
+        if (!tronWeb || !(tronWeb instanceof McashWeb))
             throw new Error('Expected instance of TronWeb');
         this.tronWeb = tronWeb;
         this.injectPromise = utils.promiseInjector(this);
@@ -98,7 +98,7 @@ export default class Event {
             size,
             page
         }
-        
+
         if (typeof filters === 'object' && Object.keys(filters).length > 0) {
             qs.filters = JSON.stringify(filters);
         }

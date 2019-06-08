@@ -1,4 +1,4 @@
-import TronWeb from 'index';
+import McashWeb from 'index';
 import utils from 'utils';
 import {AbiCoder} from 'utils/ethersUtils';
 import Validator from 'paramValidator';
@@ -32,7 +32,7 @@ function resultManager(transaction, callback) {
 
 export default class TransactionBuilder {
     constructor(tronWeb = false) {
-        if (!tronWeb || !tronWeb instanceof TronWeb)
+        if (!tronWeb || !tronWeb instanceof McashWeb)
             throw new Error('Expected instance of TronWeb');
         self = this;
         this.tronWeb = tronWeb;

@@ -1,4 +1,4 @@
-import TronWeb from 'index';
+import McashWeb from 'index';
 import utils from 'utils';
 import {keccak256, toUtf8Bytes, recoverAddress, SigningKey} from 'utils/ethersUtils';
 import {ADDRESS_PREFIX} from 'utils/address';
@@ -8,7 +8,7 @@ const ETH_MESSAGE_HEADER = '\x19Ethereum Signed Message:\n32';
 
 export default class Trx {
     constructor(tronWeb = false) {
-        if (!tronWeb || !tronWeb instanceof TronWeb)
+        if (!tronWeb || !tronWeb instanceof McashWeb)
             throw new Error('Expected instance of TronWeb');
 
         this.tronWeb = tronWeb;
@@ -298,7 +298,13 @@ export default class Trx {
 
         address = this.tronWeb.address.toHex(address);
 
-        this.tronWeb.solidityNode.request('walletsolidity/getaccount', {
+        // this.tronWeb.solidityNode.request('walletsolidity/getaccount', {
+        //     address
+        // }, 'post').then(account => {
+        //     callback(null, account);
+        // }).catch(err => callback(err));
+
+        this.tronWeb.fullNode.request('wallet/getaccount', {
             address
         }, 'post').then(account => {
             callback(null, account);
@@ -583,9 +589,9 @@ export default class Trx {
         });
 
         const tronAddress = ADDRESS_PREFIX + recovered.substr(2);
-        const base58Address = TronWeb.address.fromHex(tronAddress);
+        const base58Address = McashWeb.address.fromHex(tronAddress);
 
-        return base58Address == TronWeb.address.fromHex(address);
+        return base58Address == McashWeb.address.fromHex(address);
     }
 
     async sign(transaction = false, privateKey = this.tronWeb.defaultPrivateKey, useTronHeader = true, multisig = false, callback = false) {

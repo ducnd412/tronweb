@@ -1,11 +1,11 @@
-import TronWeb from 'index';
+import McashWeb from 'index';
 import utils from 'utils';
 import semver from 'semver';
 
 export default class Plugin {
 
     constructor(tronWeb = false) {
-        if (!tronWeb || !tronWeb instanceof TronWeb)
+        if (!tronWeb || !tronWeb instanceof McashWeb)
             throw new Error('Expected instance of TronWeb');
         this.tronWeb = tronWeb;
         this.pluginNoOverride = ['register'];
@@ -24,7 +24,7 @@ export default class Plugin {
         if (utils.isFunction(plugin.pluginInterface)) {
             pluginInterface = plugin.pluginInterface(options)
         }
-        if (semver.satisfies(TronWeb.version, pluginInterface.requires)) {
+        if (semver.satisfies(McashWeb.version, pluginInterface.requires)) {
             for (let component in pluginInterface.components) {
                 if (!this.tronWeb.hasOwnProperty(component)) {
                     // TODO implement new sub-classes
