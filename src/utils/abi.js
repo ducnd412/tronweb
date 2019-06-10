@@ -1,5 +1,5 @@
 import {AbiCoder} from './ethersUtils';
-import TronWeb from 'index';
+import McashWeb from 'index';
 import {ADDRESS_PREFIX, ADDRESS_PREFIX_REGEX} from 'utils/address';
 
 const abiCoder = new AbiCoder();
@@ -35,7 +35,7 @@ export function encodeParams(types, values) {
 
     for (let i = 0; i < types.length; i++) {
         if (types[i] === 'address') {
-            values[i] = TronWeb.address.toHex(values[i]).replace(ADDRESS_PREFIX_REGEX, '0x');
+            values[i] = McashWeb.address.toHex(values[i]).replace(ADDRESS_PREFIX_REGEX, '0x');
         }
     }
 

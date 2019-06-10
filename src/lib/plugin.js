@@ -4,10 +4,10 @@ import semver from 'semver';
 
 export default class Plugin {
 
-    constructor(tronWeb = false) {
-        if (!tronWeb || !tronWeb instanceof McashWeb)
+    constructor(mcashWeb = false) {
+        if (!mcashWeb || !mcashWeb instanceof McashWeb)
             throw new Error('Expected instance of TronWeb');
-        this.tronWeb = tronWeb;
+        this.mcashWeb = mcashWeb;
         this.pluginNoOverride = ['register'];
     }
 
@@ -20,27 +20,27 @@ export default class Plugin {
             plugged: [],
             skipped: []
         }
-        const plugin = new Plugin(this.tronWeb)
+        const plugin = new Plugin(this.mcashWeb)
         if (utils.isFunction(plugin.pluginInterface)) {
             pluginInterface = plugin.pluginInterface(options)
         }
         if (semver.satisfies(McashWeb.version, pluginInterface.requires)) {
             for (let component in pluginInterface.components) {
-                if (!this.tronWeb.hasOwnProperty(component)) {
+                if (!this.mcashWeb.hasOwnProperty(component)) {
                     // TODO implement new sub-classes
                     continue
                 }
                 let methods = pluginInterface.components[component]
-                let pluginNoOverride = this.tronWeb[component].pluginNoOverride || []
+                let pluginNoOverride = this.mcashWeb[component].pluginNoOverride || []
                 for (let method in methods) {
-                    if (method === 'constructor' || (this.tronWeb[component][method] &&
+                    if (method === 'constructor' || (this.mcashWeb[component][method] &&
                         (pluginNoOverride.includes(method) // blacklisted methods
                             || /^_/.test(method)) // private methods
                     )) {
                         result.skipped.push(method)
                         continue
                     }
-                    this.tronWeb[component][method] = methods[method].bind(this.tronWeb[component])
+                    this.mcashWeb[component][method] = methods[method].bind(this.mcashWeb[component])
                     result.plugged.push(method)
                 }
             }

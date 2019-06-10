@@ -1,8 +1,8 @@
 {
     "name": "mcashweb",
-    "version": "2.5.7-beta6",
-    "description": "JavaScript SDK that encapsulates the TRON Node HTTP API",
-    "main": "dist/TronWeb.node.js",
+    "version": "2.5.7-beta7",
+    "description": "JavaScript SDK that encapsulates the MCASH Node HTTP API",
+    "main": "dist/McashWeb.node.js",
     "scripts": {
         "prepare": "npm run build",
         "build": "npm run clean && webpack --config webpack.config.js --progress --colors",

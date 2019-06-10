@@ -9,7 +9,7 @@ const ETH_MESSAGE_HEADER = '\x19Ethereum Signed Message:\n32';
 export default class Trx {
     constructor(tronWeb = false) {
         if (!tronWeb || !tronWeb instanceof McashWeb)
-            throw new Error('Expected instance of TronWeb');
+            throw new Error('Expected instance of McashWeb');
 
         this.mcashWeb = tronWeb;
         this.injectPromise = utils.promiseInjector(this);

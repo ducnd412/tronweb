@@ -33,7 +33,7 @@ function resultManager(transaction, callback) {
 export default class TransactionBuilder {
     constructor(mcashWeb = false) {
         if (!mcashWeb || !mcashWeb instanceof McashWeb)
-            throw new Error('Expected instance of TronWeb');
+            throw new Error('Expected instance of McashWeb');
         self = this;
         this.mcashWeb = mcashWeb;
         this.injectPromise = utils.promiseInjector(this);
@@ -1140,9 +1140,8 @@ export default class TransactionBuilder {
     }
 
     /**
-     * Create an exchange between a token and TRX.
+     * Create an exchange between a token and MCASH.
      * Token Name should be a CASE SENSITIVE string.
-     * PLEASE VERIFY THIS ON TRONSCAN.
      */
     createTRXExchange(tokenName, tokenBalance, trxBalance, ownerAddress = this.mcashWeb.defaultAddress.hex, callback = false) {
         if (utils.isFunction(ownerAddress)) {
@@ -1190,9 +1189,8 @@ export default class TransactionBuilder {
 
     /**
      * Create an exchange between a token and another token.
-     * DO NOT USE THIS FOR TRX.
+     * DO NOT USE THIS FOR MCASH.
      * Token Names should be a CASE SENSITIVE string.
-     * PLEASE VERIFY THIS ON TRONSCAN.
      */
     createTokenExchange(firstTokenName, firstTokenBalance, secondTokenName, secondTokenBalance, ownerAddress = this.mcashWeb.defaultAddress.hex, callback = false) {
         if (utils.isFunction(ownerAddress)) {

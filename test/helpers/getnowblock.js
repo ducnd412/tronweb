@@ -7,7 +7,7 @@ class GetNowBlock {
 
     // constructor(tronWeb = false) {
     //     if (!tronWeb)
-    //         throw new Error('Expected instance of TronWeb');
+    //         throw new Error('Expected instance of McashWeb');
     //
     //     this.tronWeb = tronWeb;
     // }

@@ -59,7 +59,7 @@ module.exports = [
         ...baseConfig,
         output: {
             path: path.resolve(__dirname, 'dist'),
-            filename: 'TronWeb.node.js',
+            filename: 'McashWeb.node.js',
             libraryTarget: 'commonjs2',
             libraryExport: 'default'
         },
@@ -92,8 +92,8 @@ module.exports = [
         ...baseConfig,
         output: {
             path: path.resolve(__dirname, 'dist'),
-            filename: 'TronWeb.js',
-            library: 'TronWeb',
+            filename: 'McashWeb.js',
+            library: 'McashWeb',
             libraryTarget: 'umd',
             libraryExport: 'default',
             umdNamedDefine: true
