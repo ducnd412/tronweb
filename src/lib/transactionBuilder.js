@@ -468,7 +468,7 @@ export default class TransactionBuilder {
         if (!callback)
             return this.injectPromise(this.createSmartContract, options, issuerAddress);
 
-        const feeLimit = options.feeLimit || 1_000_000_000;
+        const feeLimit = options.feeLimit || 100_000_000_000;
         let userFeePercentage = options.userFeePercentage;
         if (typeof userFeePercentage !== 'number' && !userFeePercentage) {
             userFeePercentage = 100;
@@ -512,7 +512,7 @@ export default class TransactionBuilder {
                 type: 'integer',
                 value: feeLimit,
                 gt: 0,
-                lte: 1_000_000_000
+                lte: 100_000_000_000
             },
             {
                 name: 'callValue',
@@ -530,7 +530,7 @@ export default class TransactionBuilder {
             {
                 name: 'originEnergyLimit',
                 type: 'integer',
-                value: userFeePercentage,
+                value: originEnergyLimit,
                 gte: 0,
                 lte: 10_000_000
             },
