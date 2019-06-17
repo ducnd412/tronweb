@@ -51,8 +51,8 @@ export function signTransaction(priKeyBytes, transaction) {
     if (typeof priKeyBytes === 'string')
         priKeyBytes = hexStr2byteArray(priKeyBytes);
 
-    const txID = transaction.txID;
-    const signature = ECKeySign(hexStr2byteArray(txID), priKeyBytes);
+    const txId = transaction.tx_id;
+    const signature = ECKeySign(hexStr2byteArray(txId), priKeyBytes);
 
     if (Array.isArray(transaction.signature)) {
         if (!transaction.signature.includes(signature))

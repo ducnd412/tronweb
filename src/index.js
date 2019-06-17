@@ -5,7 +5,7 @@ import EventEmitter from 'eventemitter3';
 import {version} from '../package.json';
 
 import TransactionBuilder from 'lib/transactionBuilder';
-import Trx from 'lib/trx';
+import Mcash from 'lib/mcash';
 import Contract from 'lib/contract';
 import Plugin from 'lib/plugin';
 import Event from 'lib/event';
@@ -16,7 +16,7 @@ export default class McashWeb extends EventEmitter {
     static providers = providers;
     static BigNumber = BigNumber;
     static TransactionBuilder = TransactionBuilder;
-    static Trx = Trx;
+    static Mcash = Mcash;
     static Contract = Contract;
     static Plugin = Plugin;
     static Event = Event;
@@ -49,7 +49,7 @@ export default class McashWeb extends EventEmitter {
 
         this.event = new Event(this);
         this.transactionBuilder = new TransactionBuilder(this);
-        this.trx = new Trx(this);
+        this.mcash = new Mcash(this);
         this.plugin = new Plugin(this);
         this.utils = utils;
 
@@ -314,14 +314,14 @@ export default class McashWeb extends EventEmitter {
         return number.isLessThan(0) ? '-0x' + result.substr(1) : '0x' + result;
     }
 
-    static fromSun(sun) {
-        const trx = McashWeb.toBigNumber(sun).div(1_000_000);
-        return utils.isBigNumber(sun) ? trx : trx.toString(10);
+    static fromMatoshi(matoshi) {
+        const mcash = McashWeb.toBigNumber(matoshi).div(100_000_000);
+        return utils.isBigNumber(matoshi) ? mcash : mcash.toString(10);
     }
 
-    static toSun(trx) {
-        const sun = McashWeb.toBigNumber(trx).times(1_000_000);
-        return utils.isBigNumber(trx) ? sun : sun.toString(10);
+    static toMatoshi(mcash) {
+        const matoshi = McashWeb.toBigNumber(mcash).times(100_000_000);
+        return utils.isBigNumber(mcash) ? matoshi : matoshi.toString(10);
     }
 
     static toBigNumber(amount = 0) {

@@ -658,7 +658,7 @@ describe('TronWeb Instance', function () {
 
             let input = 324;
             let expected = 324e6;
-            assert.equal(TronWeb.toSun(input), expected);
+            assert.equal(TronWeb.toMatoshi(input), expected);
         });
     });
 
@@ -668,7 +668,7 @@ describe('TronWeb Instance', function () {
 
             let input = 3245e6;
             let expected = 3245;
-            assert.equal(TronWeb.fromSun(input), expected);
+            assert.equal(TronWeb.fromMatoshi(input), expected);
         });
     });
 

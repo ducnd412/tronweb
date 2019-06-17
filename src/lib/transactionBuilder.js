@@ -40,17 +40,17 @@ export default class TransactionBuilder {
         this.validator = new Validator(mcashWeb);
     }
 
-    sendTrx(to = false, amount = 0, from = this.mcashWeb.defaultAddress.hex, callback = false) {
+    sendMcash(to = false, amount = 0, from = this.mcashWeb.defaultAddress.hex, callback = false) {
         if (utils.isFunction(from)) {
             callback = from;
             from = this.mcashWeb.defaultAddress.hex;
         }
 
         if (!callback)
-            return this.injectPromise(this.sendTrx, to, amount, from);
+            return this.injectPromise(this.sendMcash, to, amount, from);
 
         // accept amounts passed as strings
-        amount = parseInt(amount)
+        amount = parseInt(amount);
 
         if (this.validator.notValid([
             {
@@ -66,7 +66,7 @@ export default class TransactionBuilder {
             {
                 names: ['recipient', 'origin'],
                 type: 'notEqual',
-                msg: 'Cannot transfer TRX to the same account'
+                msg: 'Cannot transfer MCASH to the same account'
             },
             {
                 name: 'amount',
@@ -84,16 +84,17 @@ export default class TransactionBuilder {
         }, 'post').then(transaction => resultManager(transaction, callback)).catch(err => callback(err));
     }
 
-    sendToken(to = false, amount = 0, tokenID = false, from = this.mcashWeb.defaultAddress.hex, callback = false) {
+    sendToken(to = false, amount = 0, tokenId = false, from = this.mcashWeb.defaultAddress.hex, callback = false) {
         if (utils.isFunction(from)) {
             callback = from;
             from = this.mcashWeb.defaultAddress.hex;
         }
 
         if (!callback)
-            return this.injectPromise(this.sendToken, to, amount, tokenID, from);
+            return this.injectPromise(this.sendToken, to, amount, tokenId, from);
 
-        amount = parseInt(amount)
+        if (typeof amount == 'string')
+            amount = parseInt(amount);
         if (this.validator.notValid([
             {
                 name: 'recipient',
@@ -119,7 +120,7 @@ export default class TransactionBuilder {
             {
                 name: 'token ID',
                 type: 'tokenId',
-                value: tokenID
+                value: tokenId
             }
         ], callback))
             return;
@@ -127,19 +128,19 @@ export default class TransactionBuilder {
         this.mcashWeb.fullNode.request('wallet/transferasset', {
             to_address: toHex(to),
             owner_address: toHex(from),
-            asset_id: tokenID,
+            asset_id: tokenId,
             amount: parseInt(amount)
         }, 'post').then(transaction => resultManager(transaction, callback)).catch(err => callback(err));
     }
 
-    purchaseToken(issuerAddress = false, tokenID = false, amount = 0, buyer = this.mcashWeb.defaultAddress.hex, callback = false) {
+    purchaseToken(issuerAddress = false, tokenId = false, amount = 0, buyer = this.mcashWeb.defaultAddress.hex, callback = false) {
         if (utils.isFunction(buyer)) {
             callback = buyer;
             buyer = this.mcashWeb.defaultAddress.hex;
         }
 
         if (!callback)
-            return this.injectPromise(this.purchaseToken, issuerAddress, tokenID, amount, buyer);
+            return this.injectPromise(this.purchaseToken, issuerAddress, tokenId, amount, buyer);
 
         if (this.validator.notValid([
             {
@@ -166,7 +167,7 @@ export default class TransactionBuilder {
             {
                 name: 'token ID',
                 type: 'tokenId',
-                value: tokenID
+                value: tokenId
             }
         ], callback))
             return;
@@ -174,8 +175,8 @@ export default class TransactionBuilder {
         this.mcashWeb.fullNode.request('wallet/participateassetissue', {
             to_address: toHex(issuerAddress),
             owner_address: toHex(buyer),
-            asset_name: fromUtf8(tokenID),
-            amount: parseInt(amount)
+            asset_name: fromUtf8(tokenId),
+            amount: amount
         }, 'post').then(transaction => resultManager(transaction, callback)).catch(err => callback(err));
     }
 
@@ -238,10 +239,10 @@ export default class TransactionBuilder {
 
         const data = {
             owner_address: toHex(address),
-            frozen_balance: parseInt(amount),
+            frozen_balance: amount,
             frozen_duration: parseInt(duration),
             resource: resource
-        }
+        };
 
         if (utils.isNotNullOrUndefined(receiverAddress) && toHex(receiverAddress) !== toHex(address)) {
             data.receiver_address = toHex(receiverAddress)
@@ -293,7 +294,7 @@ export default class TransactionBuilder {
         const data = {
             owner_address: toHex(address),
             resource: resource
-        }
+        };
 
         if (utils.isNotNullOrUndefined(receiverAddress) && toHex(receiverAddress) !== toHex(address)) {
             data.receiver_address = toHex(receiverAddress)
@@ -340,7 +341,7 @@ export default class TransactionBuilder {
         const data = {
             owner_address: toHex(address),
             stake_amount: amount,
-            stake_duration: parseInt(stakeDuration)
+            stake_duration: stakeDuration
         };
 
         this.mcashWeb.fullNode.request('wallet/stake', data, 'post').then(transaction => resultManager(transaction, callback)).catch(err => callback(err));
@@ -394,21 +395,26 @@ export default class TransactionBuilder {
         }, 'post').then(transaction => resultManager(transaction, callback)).catch(err => callback(err));
     }
 
-    applyForSR(address = this.mcashWeb.defaultAddress.hex, url = false, callback = false) {
-        if (utils.isValidURL(address)) {
+    applyForSR(witnessAddress = false, ownerAddress = this.mcashWeb.defaultAddress.hex, url = false, callback = false) {
+        if (utils.isValidURL(ownerAddress)) {
             callback = url || false;
             url = address;
-            address = this.mcashWeb.defaultAddress.hex;
+            ownerAddress = this.mcashWeb.defaultAddress.hex;
         }
 
         if (!callback)
-            return this.injectPromise(this.applyForSR, address, url);
+            return this.injectPromise(this.applyForSR, witnessAddress, ownerAddress, url);
 
         if (this.validator.notValid([
             {
-                name: 'origin',
+                name: 'owner',
                 type: 'address',
-                value: address
+                value: ownerAddress
+            },
+            {
+                name: 'witness',
+                type: 'address',
+                value: witnessAddress
             },
             {
                 name: 'url',
@@ -420,24 +426,20 @@ export default class TransactionBuilder {
             return;
 
         this.mcashWeb.fullNode.request('wallet/createwitness', {
-            owner_address: toHex(address),
+            owner_address: toHex(ownerAddress),
+            witness_address: toHex(witnessAddress),
             url: fromUtf8(url)
         }, 'post').then(transaction => resultManager(transaction, callback)).catch(err => callback(err));
     }
 
-    vote(ownerAddress = this.mcashWeb.defaultAddress.hex, voteAddress = this.mcashWeb.defaultAddress.hex, callback = false) {
+    vote(voteAddress = false, ownerAddress = this.mcashWeb.defaultAddress.hex, callback = false) {
         if (utils.isFunction(ownerAddress)) {
             callback = ownerAddress;
             ownerAddress = this.mcashWeb.defaultAddress.hex;
         }
 
-        if (utils.isFunction(voteAddress)) {
-            callback = voteAddress;
-            voteAddress = this.mcashWeb.defaultAddress.hex;
-        }
-
         if (!callback)
-            return this.injectPromise(this.vote, ownerAddress, voteAddress);
+            return this.injectPromise(this.vote, voteAddress, ownerAddress);
 
         if (this.validator.notValid([
             {
@@ -498,7 +500,7 @@ export default class TransactionBuilder {
 
 
         const payable = abi.some(func => {
-            return func.type == 'constructor' && func.payable;
+            return func.type === 'constructor' && func.payable;
         });
 
         if (this.validator.notValid([
@@ -614,13 +616,13 @@ export default class TransactionBuilder {
             bytecode,
             parameter: parameters,
             name
-        }
+        };
 
         // tokenValue and tokenId can cause errors if provided when the trx10 proposal has not been approved yet. So we set them only if they are passed to the method.
         if (utils.isNotNullOrUndefined(tokenValue))
             args.call_token_value = parseInt(tokenValue)
         if (utils.isNotNullOrUndefined(tokenId))
-            args.token_id = parseInt(tokenId)
+            args.token_id = parseInt(tokenId);
 
         this.mcashWeb.fullNode.request('wallet/deploycontract', args, 'post').then(transaction => resultManager(transaction, callback)).catch(err => callback(err));
     }
@@ -630,7 +632,7 @@ export default class TransactionBuilder {
             params[2] = {
                 feeLimit: params[2],
                 callValue: params[3]
-            }
+            };
             params.splice(3, 1)
         }
         return this._triggerSmartContract(...params);
@@ -673,8 +675,8 @@ export default class TransactionBuilder {
             feeLimit
         } = Object.assign({
             callValue: 0,
-            feeLimit: 1_000_000_000
-        }, options)
+            feeLimit: 100_000_000_000
+        }, options);
 
         if (this.validator.notValid([
             {
@@ -682,7 +684,7 @@ export default class TransactionBuilder {
                 type: 'integer',
                 value: feeLimit,
                 gt: 0,
-                lte: 1_000_000_000
+                lte: 100_000_000_000
             },
             {
                 name: 'callValue',
@@ -740,7 +742,7 @@ export default class TransactionBuilder {
                 if (!type || !utils.isString(type) || !type.length)
                     return callback('Invalid parameter type provided: ' + type);
 
-                if (type == 'address')
+                if (type === 'address')
                     value = toHex(value).replace(ADDRESS_PREFIX_REGEX, '0x');
 
                 types.push(type);
@@ -748,13 +750,14 @@ export default class TransactionBuilder {
             }
 
             try {
+                // todo: refactor
                 // workaround for unsupported trcToken type
                 types = types.map(type => {
                     if (/trcToken/.test(type)) {
                         type = type.replace(/trcToken/, 'uint256')
                     }
                     return type
-                })
+                });
 
                 parameters = abiCoder.encode(types, values).replace(/^(0x)/, '');
             } catch (ex) {
@@ -772,9 +775,9 @@ export default class TransactionBuilder {
         };
 
         if (utils.isNotNullOrUndefined(tokenValue))
-            args.call_token_value = parseInt(tokenValue)
+            args.call_token_value = parseInt(tokenValue);
         if (utils.isNotNullOrUndefined(tokenId))
-            args.token_id = parseInt(tokenId)
+            args.token_id = parseInt(tokenId);
 
         this.mcashWeb.fullNode.request('wallet/triggersmartcontract', args, 'post').then(transaction => resultManager(transaction, callback)).catch(err => callback(err));
     }
@@ -900,18 +903,18 @@ export default class TransactionBuilder {
             abbr: fromUtf8(abbreviation),
             description: fromUtf8(description),
             url: fromUtf8(url),
-            total_supply: parseInt(totalSupply),
-            mcash_num: parseInt(mcashRatio),
-            num: parseInt(tokenRatio),
-            start_time: parseInt(saleStart),
-            end_time: parseInt(saleEnd),
-            free_asset_net_limit: parseInt(freeBandwidth),
-            public_free_asset_net_limit: parseInt(freeBandwidthLimit),
+            total_supply: totalSupply,
+            mcash_num: mcashRatio,
+            num: tokenRatio,
+            start_time: saleStart,
+            end_time: saleEnd,
+            free_asset_net_limit: freeBandwidth,
+            public_free_asset_net_limit: freeBandwidthLimit,
             frozen_supply: {
-                frozen_amount: parseInt(frozenAmount),
-                frozen_days: parseInt(frozenDuration)
+                frozen_amount: frozenAmount,
+                frozen_days: frozenDuration
             }
-        }
+        };
         if (precision && !isNaN(parseInt(precision))) {
             data.precision = parseInt(precision);
         }
@@ -1069,14 +1072,14 @@ export default class TransactionBuilder {
      * Deletes a network modification proposal that the owner issued.
      * Only current Super Representative can vote on a proposal.
      */
-    deleteProposal(proposalID = false, issuerAddress = this.mcashWeb.defaultAddress.hex, callback = false) {
+    deleteProposal(proposalId = false, issuerAddress = this.mcashWeb.defaultAddress.hex, callback = false) {
         if (utils.isFunction(issuerAddress)) {
             callback = issuerAddress;
             issuerAddress = this.mcashWeb.defaultAddress.hex;
         }
 
         if (!callback)
-            return this.injectPromise(this.deleteProposal, proposalID, issuerAddress);
+            return this.injectPromise(this.deleteProposal, proposalId, issuerAddress);
 
         if (this.validator.notValid([
             {
@@ -1085,9 +1088,9 @@ export default class TransactionBuilder {
                 value: issuerAddress
             },
             {
-                name: 'proposalID',
+                name: 'proposalId',
                 type: 'integer',
-                value: proposalID,
+                value: proposalId,
                 gte: 0
             }
         ], callback))
@@ -1095,7 +1098,7 @@ export default class TransactionBuilder {
 
         this.mcashWeb.fullNode.request('wallet/proposaldelete', {
             owner_address: toHex(issuerAddress),
-            proposal_id: parseInt(proposalID)
+            proposal_id: proposalId
         }, 'post').then(transaction => resultManager(transaction, callback)).catch(err => callback(err));
     }
 
@@ -1103,14 +1106,14 @@ export default class TransactionBuilder {
      * Adds a vote to an issued network modification proposal.
      * Only current Super Representative can vote on a proposal.
      */
-    voteProposal(proposalID = false, isApproval = false, voterAddress = this.mcashWeb.defaultAddress.hex, callback = false) {
+    voteProposal(proposalId = false, isApproval = false, voterAddress = this.mcashWeb.defaultAddress.hex, callback = false) {
         if (utils.isFunction(voterAddress)) {
             callback = voterAddress;
             voterAddress = this.mcashWeb.defaultAddress.hex;
         }
 
         if (!callback)
-            return this.injectPromise(this.voteProposal, proposalID, isApproval, voterAddress);
+            return this.injectPromise(this.voteProposal, proposalId, isApproval, voterAddress);
 
         if (this.validator.notValid([
             {
@@ -1119,9 +1122,9 @@ export default class TransactionBuilder {
                 value: voterAddress
             },
             {
-                name: 'proposalID',
+                name: 'proposalId',
                 type: 'integer',
-                value: proposalID,
+                value: proposalId,
                 gte: 0
             },
             {
@@ -1134,7 +1137,7 @@ export default class TransactionBuilder {
 
         this.mcashWeb.fullNode.request('wallet/proposalapprove', {
             owner_address: toHex(voterAddress),
-            proposal_id: parseInt(proposalID),
+            proposal_id: proposalId,
             is_add_approval: isApproval
         }, 'post').then(transaction => resultManager(transaction, callback)).catch(err => callback(err));
     }
@@ -1143,14 +1146,14 @@ export default class TransactionBuilder {
      * Create an exchange between a token and MCASH.
      * Token Name should be a CASE SENSITIVE string.
      */
-    createTRXExchange(tokenName, tokenBalance, trxBalance, ownerAddress = this.mcashWeb.defaultAddress.hex, callback = false) {
+    createMcashExchange(tokenId, tokenBalance, mcashBalance, ownerAddress = this.mcashWeb.defaultAddress.hex, callback = false) {
         if (utils.isFunction(ownerAddress)) {
             callback = ownerAddress;
             ownerAddress = this.mcashWeb.defaultAddress.hex;
         }
 
         if (!callback)
-            return this.injectPromise(this.createTRXExchange, tokenName, tokenBalance, trxBalance, ownerAddress);
+            return this.injectPromise(this.createMcashExchange, tokenId, tokenBalance, mcashBalance, ownerAddress);
 
         if (this.validator.notValid([
             {
@@ -1159,9 +1162,10 @@ export default class TransactionBuilder {
                 value: ownerAddress
             },
             {
-                name: 'token name',
-                type: 'not-empty-string',
-                value: tokenName
+                name: 'token id',
+                type: 'integer',
+                value: tokenId,
+                gte: 0,
             },
             {
                 name: 'token balance',
@@ -1169,19 +1173,19 @@ export default class TransactionBuilder {
                 value: tokenBalance
             },
             {
-                name: 'trx balance',
+                name: 'mcash balance',
                 type: 'positive-integer',
-                value: trxBalance
+                value: mcashBalance
             }
         ], callback))
             return;
 
         this.mcashWeb.fullNode.request('wallet/exchangecreate', {
             owner_address: toHex(ownerAddress),
-            first_token_id: fromUtf8(tokenName),
+            first_token_id: tokenId,
             first_token_balance: tokenBalance,
-            second_token_id: '5f', // Constant for TRX.
-            second_token_balance: trxBalance
+            second_token_id: 0, // Constant for TRX.
+            second_token_balance: mcashBalance
         }, 'post').then(resources => {
             callback(null, resources);
         }).catch(err => callback(err));
@@ -1192,14 +1196,14 @@ export default class TransactionBuilder {
      * DO NOT USE THIS FOR MCASH.
      * Token Names should be a CASE SENSITIVE string.
      */
-    createTokenExchange(firstTokenName, firstTokenBalance, secondTokenName, secondTokenBalance, ownerAddress = this.mcashWeb.defaultAddress.hex, callback = false) {
+    createTokenExchange(firstTokenId, firstTokenBalance, secondTokenId, secondTokenBalance, ownerAddress = this.mcashWeb.defaultAddress.hex, callback = false) {
         if (utils.isFunction(ownerAddress)) {
             callback = ownerAddress;
             ownerAddress = this.mcashWeb.defaultAddress.hex;
         }
 
         if (!callback)
-            return this.injectPromise(this.createTokenExchange, firstTokenName, firstTokenBalance, secondTokenName, secondTokenBalance, ownerAddress);
+            return this.injectPromise(this.createTokenExchange, firstTokenId, firstTokenBalance, secondTokenId, secondTokenBalance, ownerAddress);
 
         if (this.validator.notValid([
             {
@@ -1208,14 +1212,16 @@ export default class TransactionBuilder {
                 value: ownerAddress
             },
             {
-                name: 'first token name',
-                type: 'not-empty-string',
-                value: firstTokenName
+                name: 'first token id',
+                type: 'integer',
+                value: firstTokenId,
+                gte: 0,
             },
             {
-                name: 'second token name',
-                type: 'not-empty-string',
-                value: secondTokenName
+                name: 'second token id',
+                type: 'integer',
+                value: secondTokenId,
+                gte: 0,
             },
             {
                 name: 'first token balance',
@@ -1232,9 +1238,9 @@ export default class TransactionBuilder {
 
         this.mcashWeb.fullNode.request('wallet/exchangecreate', {
             owner_address: toHex(ownerAddress),
-            first_token_id: fromUtf8(firstTokenName),
+            first_token_id: firstTokenId,
             first_token_balance: firstTokenBalance,
-            second_token_id: fromUtf8(secondTokenName),
+            second_token_id: secondTokenId,
             second_token_balance: secondTokenBalance
         }, 'post').then(resources => {
             callback(null, resources);
@@ -1244,16 +1250,16 @@ export default class TransactionBuilder {
     /**
      * Adds tokens into a bancor style exchange.
      * Will add both tokens at market rate.
-     * Use "_" for the constant value for TRX.
+     * Use 0 for the constant value for MCASH.
      */
-    injectExchangeTokens(exchangeID = false, tokenName = false, tokenAmount = 0, ownerAddress = this.mcashWeb.defaultAddress.hex, callback = false) {
+    injectExchangeTokens(exchangeId = false, tokenId = false, tokenAmount = 0, ownerAddress = this.mcashWeb.defaultAddress.hex, callback = false) {
         if (utils.isFunction(ownerAddress)) {
             callback = ownerAddress;
             ownerAddress = this.mcashWeb.defaultAddress.hex;
         }
 
         if (!callback)
-            return this.injectPromise(this.injectExchangeTokens, exchangeID, tokenName, tokenAmount, ownerAddress);
+            return this.injectPromise(this.injectExchangeTokens, exchangeId, tokenId, tokenAmount, ownerAddress);
 
         if (this.validator.notValid([
             {
@@ -1262,20 +1268,21 @@ export default class TransactionBuilder {
                 value: ownerAddress
             },
             {
-                name: 'token name',
-                type: 'not-empty-string',
-                value: tokenName
+                name: 'tokenId',
+                type: 'integer',
+                value: tokenId,
+                gte: 0,
             },
             {
-                name: 'token amount',
+                name: 'tokenAmount',
                 type: 'integer',
                 value: tokenAmount,
                 gte: 1
             },
             {
-                name: 'exchangeID',
+                name: 'exchangeId',
                 type: 'integer',
-                value: exchangeID,
+                value: exchangeId,
                 gte: 0
             }
         ], callback))
@@ -1283,9 +1290,9 @@ export default class TransactionBuilder {
 
         this.mcashWeb.fullNode.request('wallet/exchangeinject', {
             owner_address: toHex(ownerAddress),
-            exchange_id: parseInt(exchangeID),
-            token_id: fromUtf8(tokenName),
-            quant: parseInt(tokenAmount)
+            exchange_id: exchangeId,
+            token_id: tokenId,
+            quant: tokenAmount
         }, 'post').then(transaction => resultManager(transaction, callback)).catch(err => callback(err));
     }
 
@@ -1294,14 +1301,14 @@ export default class TransactionBuilder {
      * Will withdraw at market rate both tokens.
      * Use "_" for the constant value for TRX.
      */
-    withdrawExchangeTokens(exchangeID = false, tokenName = false, tokenAmount = 0, ownerAddress = this.mcashWeb.defaultAddress.hex, callback = false) {
+    withdrawExchangeTokens(exchangeId = false, tokenId = false, tokenAmount = 0, ownerAddress = this.mcashWeb.defaultAddress.hex, callback = false) {
         if (utils.isFunction(ownerAddress)) {
             callback = ownerAddress;
             ownerAddress = this.mcashWeb.defaultAddress.hex;
         }
 
         if (!callback)
-            return this.injectPromise(this.withdrawExchangeTokens, exchangeID, tokenName, tokenAmount, ownerAddress);
+            return this.injectPromise(this.withdrawExchangeTokens, exchangeId, tokenId, tokenAmount, ownerAddress);
 
         if (this.validator.notValid([
             {
@@ -1310,20 +1317,21 @@ export default class TransactionBuilder {
                 value: ownerAddress
             },
             {
-                name: 'token name',
-                type: 'not-empty-string',
-                value: tokenName
+                name: 'tokenId',
+                type: 'integer',
+                value: tokenId,
+                gte: 0,
             },
             {
-                name: 'token amount',
+                name: 'tokenAmount',
                 type: 'integer',
                 value: tokenAmount,
                 gte: 1
             },
             {
-                name: 'exchangeID',
+                name: 'exchangeId',
                 type: 'integer',
-                value: exchangeID,
+                value: exchangeId,
                 gte: 0
             }
         ], callback))
@@ -1331,9 +1339,9 @@ export default class TransactionBuilder {
 
         this.mcashWeb.fullNode.request('wallet/exchangewithdraw', {
             owner_address: toHex(ownerAddress),
-            exchange_id: parseInt(exchangeID),
-            token_id: fromUtf8(tokenName),
-            quant: parseInt(tokenAmount)
+            exchange_id: exchangeId,
+            token_id: tokenId,
+            quant: tokenAmount
         }, 'post').then(transaction => resultManager(transaction, callback)).catch(err => callback(err));
     }
 
@@ -1342,8 +1350,8 @@ export default class TransactionBuilder {
      * Expected value is a validation and used to cap the total amt of token 2 spent.
      * Use "_" for the constant value for TRX.
      */
-    tradeExchangeTokens(exchangeID = false,
-                        tokenName = false,
+    tradeExchangeTokens(exchangeId = false,
+                        tokenId = false,
                         tokenAmountSold = 0,
                         tokenAmountExpected = 0,
                         ownerAddress = this.mcashWeb.defaultAddress.hex,
@@ -1354,7 +1362,7 @@ export default class TransactionBuilder {
         }
 
         if (!callback)
-            return this.injectPromise(this.tradeExchangeTokens, exchangeID, tokenName, tokenAmountSold, tokenAmountExpected, ownerAddress);
+            return this.injectPromise(this.tradeExchangeTokens, exchangeId, tokenId, tokenAmountSold, tokenAmountExpected, ownerAddress);
 
         if (this.validator.notValid([
             {
@@ -1364,8 +1372,9 @@ export default class TransactionBuilder {
             },
             {
                 name: 'token name',
-                type: 'not-empty-string',
-                value: tokenName
+                type: 'integer',
+                value: tokenId,
+                gte: 0
             },
             {
                 name: 'tokenAmountSold',
@@ -1380,9 +1389,9 @@ export default class TransactionBuilder {
                 gte: 1
             },
             {
-                name: 'exchangeID',
+                name: 'exchangeId',
                 type: 'integer',
-                value: exchangeID,
+                value: exchangeId,
                 gte: 0
             }
         ], callback))
@@ -1390,10 +1399,10 @@ export default class TransactionBuilder {
 
         this.mcashWeb.fullNode.request('wallet/exchangetransaction', {
             owner_address: toHex(ownerAddress),
-            exchange_id: parseInt(exchangeID),
-            token_id: this.mcashWeb.fromAscii(tokenName),
-            quant: parseInt(tokenAmountSold),
-            expected: parseInt(tokenAmountExpected)
+            exchange_id: exchangeId,
+            token_id: tokenId,
+            quant: tokenAmountSold,
+            expected: tokenAmountExpected
         }, 'post').then(transaction => resultManager(transaction, callback)).catch(err => callback(err));
     }
 
@@ -1557,7 +1566,7 @@ export default class TransactionBuilder {
 
         const data = {
             owner_address: ownerAddress
-        }
+        };
         if (ownerPermissions) {
             data.owner = ownerPermissions
         }

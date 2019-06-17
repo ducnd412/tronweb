@@ -31,7 +31,7 @@ module.exports = async function (type, ...params) {
                     break;
                 }
                 case 'tokenById': {
-                    data = await tronWeb.trx.getTokenFromID(params[0]);
+                    data = await tronWeb.trx.getTokenFromId(params[0]);
                     isFound = !!data.name;
                     break;
                 }

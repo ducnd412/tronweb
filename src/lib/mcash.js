@@ -3,15 +3,15 @@ import utils from 'utils';
 import {keccak256, toUtf8Bytes, recoverAddress, SigningKey} from 'utils/ethersUtils';
 import {ADDRESS_PREFIX} from 'utils/address';
 
-const TRX_MESSAGE_HEADER = '\x19TRON Signed Message:\n32';
+const MCASH_MESSAGE_HEADER = '\x19MCASH Signed Message:\n32';
 const ETH_MESSAGE_HEADER = '\x19Ethereum Signed Message:\n32';
 
-export default class Trx {
-    constructor(tronWeb = false) {
-        if (!tronWeb || !tronWeb instanceof McashWeb)
+export default class Mcash {
+    constructor(mcashWeb = false) {
+        if (!mcashWeb || !mcashWeb instanceof McashWeb)
             throw new Error('Expected instance of McashWeb');
 
-        this.mcashWeb = tronWeb;
+        this.mcashWeb = mcashWeb;
         this.injectPromise = utils.promiseInjector(this);
         this.cache = {
             contracts: {}
@@ -249,7 +249,7 @@ export default class Trx {
                 const [from, to] = await Promise.all([
                     this.getTransactionsRelated(address, 'from', limit, offset),
                     this.getTransactionsRelated(address, 'to', limit, offset)
-                ])
+                ]);
 
                 return callback(null, [
                     ...from.map(tx => (tx.direction = 'from', tx)),
@@ -376,8 +376,8 @@ export default class Trx {
 
         this.mcashWeb.fullNode.request('wallet/getaccountnet', {
             address
-        }, 'post').then(({freeNetUsed = 0, freeNetLimit = 0, NetUsed = 0, NetLimit = 0}) => {
-            callback(null, (freeNetLimit - freeNetUsed) + (NetLimit - NetUsed));
+        }, 'post').then(({free_bandwidth_used = 0, free_bandwidth_limit = 0, bandwidth_used = 0, bandwidth_limit = 0}) => {
+            callback(null, (free_bandwidth_limit - free_bandwidth_used) + (bandwidth_limit - bandwidth_used));
         }).catch(err => callback(err));
     }
 
@@ -397,11 +397,11 @@ export default class Trx {
 
         this.mcashWeb.fullNode.request('wallet/getassetissuebyaccount', {
             address
-        }, 'post').then(({assetIssue = false}) => {
-            if (!assetIssue)
+        }, 'post').then(({asset_issue = false}) => {
+            if (!asset_issue)
                 return callback(null, {});
 
-            const tokens = assetIssue.map(token => {
+            const tokens = asset_issue.map(token => {
                 return this._parseToken(token);
             }).reduce((tokens, token) => {
                 return tokens[token.name] = token, tokens;
@@ -411,18 +411,18 @@ export default class Trx {
         }).catch(err => callback(err));
     }
 
-    getTokenFromID(tokenID = false, callback = false) {
+    getTokenFromId(tokenId = false, callback = false) {
         if (!callback)
-            return this.injectPromise(this.getTokenFromID, tokenID);
+            return this.injectPromise(this.getTokenFromId, tokenId);
 
-        if (utils.isInteger(tokenID))
-            tokenID = tokenID.toString()
+        if (utils.isString(tokenId))
+            tokenId = parseInt(tokenId);
 
-        if (!utils.isString(tokenID) || !tokenID.length)
+        if (!utils.isInteger(tokenId))
             return callback('Invalid token ID provided');
 
-        this.mcashWeb.fullNode.request('wallet/getassetissuebyname', {
-            value: this.mcashWeb.fromUtf8(tokenID)
+        this.mcashWeb.fullNode.request('wallet/getassetissuebyid', {
+            value: tokenId
         }, 'post').then(token => {
             if (!token.name)
                 return callback('Token does not exist');
@@ -463,8 +463,8 @@ export default class Trx {
             return callback('Invalid end of range provided');
 
         this.mcashWeb.fullNode.request('wallet/getblockbylimitnext', {
-            startNum: parseInt(start),
-            endNum: parseInt(end) + 1
+            start_num: parseInt(start),
+            end_num: parseInt(end) + 1
         }, 'post').then(({block = []}) => {
             callback(null, block);
         }).catch(err => callback(err));
@@ -567,7 +567,7 @@ export default class Trx {
         if (!utils.isHex(message))
             return callback('Expected hex message input');
 
-        if (Trx.verifySignature(message, address, signature, useTronHeader))
+        if (Mcash.verifySignature(message, address, signature, useTronHeader))
             return callback(null, true);
 
         callback('Signature does not match');
@@ -577,7 +577,7 @@ export default class Trx {
         message = message.replace(/^0x/,'');
         signature = signature.replace(/^0x/,'');
         const messageBytes = [
-            ...toUtf8Bytes(useTronHeader ? TRX_MESSAGE_HEADER : ETH_MESSAGE_HEADER),
+            ...toUtf8Bytes(useTronHeader ? MCASH_MESSAGE_HEADER : ETH_MESSAGE_HEADER),
             ...utils.code.hexStr2byteArray(message)
         ];
 
@@ -625,7 +625,7 @@ export default class Trx {
                 return callback('Expected hex message input');
 
             try {
-                const signatureHex = Trx.signString(transaction, privateKey, useTronHeader)
+                const signatureHex = Mcash.signString(transaction, privateKey, useTronHeader)
                 return callback(null, signatureHex);
             } catch (ex) {
                 callback(ex);
@@ -659,7 +659,7 @@ export default class Trx {
         message = message.replace(/^0x/,'');
         const signingKey = new SigningKey(privateKey);
         const messageBytes = [
-            ...toUtf8Bytes(useTronHeader ? TRX_MESSAGE_HEADER : ETH_MESSAGE_HEADER),
+            ...toUtf8Bytes(useTronHeader ? MCASH_MESSAGE_HEADER : ETH_MESSAGE_HEADER),
             ...utils.code.hexStr2byteArray(message)
         ];
 
@@ -842,7 +842,7 @@ export default class Trx {
 
         try {
             const address = options.privateKey ? this.mcashWeb.address.fromPrivateKey(options.privateKey) : options.address;
-            const transaction = await this.mcashWeb.transactionBuilder.sendTrx(to, amount, address);
+            const transaction = await this.mcashWeb.transactionBuilder.sendMcash(to, amount, address);
             const signedTransaction = await this.sign(transaction, options.privateKey || undefined);
             const result = await this.sendRawTransaction(signedTransaction);
 
@@ -852,7 +852,7 @@ export default class Trx {
         }
     }
 
-    async sendToken(to = false, amount = false, tokenID = false, options = {}, callback = false) {
+    async sendToken(to = false, amount = false, tokenId = false, options = {}, callback = false) {
         if (utils.isFunction(options)) {
             callback = options;
             options = {};
@@ -862,7 +862,7 @@ export default class Trx {
             options = {privateKey: options};
 
         if (!callback)
-            return this.injectPromise(this.sendToken, to, amount, tokenID, options);
+            return this.injectPromise(this.sendToken, to, amount, tokenId, options);
 
         if (!this.mcashWeb.isAddress(to))
             return callback('Invalid recipient provided');
@@ -870,10 +870,10 @@ export default class Trx {
         if (!utils.isInteger(amount) || amount <= 0)
             return callback('Invalid amount provided');
 
-        if (utils.isInteger(tokenID))
-            tokenID = tokenID.toString()
+        if (utils.isInteger(tokenId))
+            tokenId = tokenId.toString()
 
-        if (!utils.isString(tokenID))
+        if (!utils.isString(tokenId))
             return callback('Invalid token ID provided');
 
         options = {
@@ -887,7 +887,7 @@ export default class Trx {
 
         try {
             const address = options.privateKey ? this.mcashWeb.address.fromPrivateKey(options.privateKey) : options.address;
-            const transaction = await this.mcashWeb.transactionBuilder.sendToken(to, amount, tokenID, address);
+            const transaction = await this.mcashWeb.transactionBuilder.sendToken(to, amount, tokenId, address);
             const signedTransaction = await this.sign(transaction, options.privateKey || undefined);
             const result = await this.sendRawTransaction(signedTransaction);
 
@@ -898,11 +898,9 @@ export default class Trx {
     }
 
     /**
-     * Freezes an amount of TRX.
-     * Will give bandwidth OR Energy and TRON Power(voting rights)
-     * to the owner of the frozen tokens.
+     * Freezes an amount of MCASH.
      *
-     * @param amount - is the number of frozen trx
+     * @param amount - is the number of frozen MCASH
      * @param duration - is the duration in days to be frozen
      * @param resource - is the type, must be either "ENERGY" or "BANDWIDTH"
      * @param options
@@ -965,8 +963,8 @@ export default class Trx {
     }
 
     /**
-     * Unfreeze TRX that has passed the minimum freeze duration.
-     * Unfreezing will remove bandwidth and TRON Power.
+     * Unfreeze MCASH that has passed the minimum freeze duration.
+     * Unfreezing will remove bandwidth.
      *
      * @param resource - is the type, must be either "ENERGY" or "BANDWIDTH"
      * @param options
@@ -1170,7 +1168,7 @@ export default class Trx {
         return this.sendTransaction(...args);
     }
 
-    sendTrx(...args) {
+    sendMcash(...args) {
         return this.sendTransaction(...args);
     }
 
@@ -1185,15 +1183,15 @@ export default class Trx {
     /**
      * Gets a network modification proposal by ID.
      */
-    getProposal(proposalID = false, callback = false) {
+    getProposal(proposalId = false, callback = false) {
         if (!callback)
-            return this.injectPromise(this.getProposal, proposalID);
+            return this.injectPromise(this.getProposal, proposalId);
 
-        if (!utils.isInteger(proposalID) || proposalID < 0)
+        if (!utils.isInteger(proposalId) || proposalId < 0)
             return callback('Invalid proposalID provided');
 
         this.mcashWeb.fullNode.request('wallet/getproposalbyid', {
-            id: parseInt(proposalID),
+            id: proposalId,
         }, 'post').then(proposal => {
             callback(null, proposal);
         }).catch(err => callback(err));
@@ -1218,8 +1216,8 @@ export default class Trx {
         if (!callback)
             return this.injectPromise(this.getChainParameters);
 
-        this.mcashWeb.fullNode.request('wallet/getchainparameters', {}, 'post').then(({chainParameter = []}) => {
-            callback(null, chainParameter);
+        this.mcashWeb.fullNode.request('wallet/getchainparameters', {}, 'post').then(({chain_parameter = []}) => {
+            callback(null, chain_parameter);
         }).catch(err => callback(err));
     }
 
@@ -1243,15 +1241,15 @@ export default class Trx {
     /**
      * Get the exchange ID.
      */
-    getExchangeByID(exchangeID = false, callback = false) {
+    getExchangeByID(exchangeId = false, callback = false) {
         if (!callback)
-            return this.injectPromise(this.getExchangeByID, exchangeID);
+            return this.injectPromise(this.getExchangeByID, exchangeId);
 
-        if (!utils.isInteger(exchangeID) || exchangeID < 0)
+        if (!utils.isInteger(exchangeId) || exchangeId < 0)
             return callback('Invalid exchangeID provided');
 
         this.mcashWeb.fullNode.request('wallet/getexchangebyid', {
-            id: exchangeID,
+            id: exchangeId,
         }, 'post').then(exchange => {
             callback(null, exchange);
         }).catch(err => callback(err));
@@ -1304,39 +1302,18 @@ export default class Trx {
         }, 'post').catch(err => callback(err));
     }
 
-
-    getTokenListByName(tokenID = false, callback = false) {
+    getTokenById(tokenId = false, callback = false) {
         if (!callback)
-            return this.injectPromise(this.getTokenListByName, tokenID);
+            return this.injectPromise(this.getTokenById, tokenId);
 
-        if (utils.isInteger(tokenID))
-            tokenID = tokenID.toString()
+        if (utils.isString(tokenId))
+            tokenId = parseInt(tokenId);
 
-        if (!utils.isString(tokenID) || !tokenID.length)
-            return callback('Invalid token ID provided');
-
-        this.mcashWeb.fullNode.request('wallet/getassetissuelistbyname', {
-            value: this.mcashWeb.fromUtf8(tokenID)
-        }, 'post').then(token => {
-            if (!token.name)
-                return callback('Token does not exist');
-
-            callback(null, this._parseToken(token));
-        }).catch(err => callback(err));
-    }
-
-    getTokenByID(tokenID = false, callback = false) {
-        if (!callback)
-            return this.injectPromise(this.getTokenByID, tokenID);
-
-        if (utils.isInteger(tokenID))
-            tokenID = tokenID.toString();
-
-        if (!utils.isString(tokenID) || !tokenID.length)
+        if (!utils.isInteger(tokenId))
             return callback('Invalid token ID provided');
 
         this.mcashWeb.fullNode.request('wallet/getassetissuebyid', {
-            value: tokenID
+            value: tokenId
         }, 'post').then(token => {
             if (!token.name)
                 return callback('Token does not exist');

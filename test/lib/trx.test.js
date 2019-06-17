@@ -37,7 +37,7 @@ describe('TronWeb.trx', function () {
     describe('#constructor()', function () {
 
         it('should have been set a full instance in tronWeb', function () {
-            assert.instanceOf(tronWeb.trx, TronWeb.Trx);
+            assert.instanceOf(tronWeb.trx, TronWeb.Mcash);
         });
 
     });
@@ -135,7 +135,7 @@ describe('TronWeb.trx', function () {
 
                 const account = await tronWeb.createAccount();
                 toHex = account.address.hex;
-                const transaction = await tronWeb.transactionBuilder.sendTrx(account.address.hex, 10e5, accounts.hex[idx]);
+                const transaction = await tronWeb.transactionBuilder.sendMcash(account.address.hex, 10e5, accounts.hex[idx]);
                 await broadcaster(null, accounts.pks[idx], transaction);
                 await waitChainData('account', account.address.hex);
             });
@@ -165,7 +165,7 @@ describe('TronWeb.trx', function () {
 
                 const account = await tronWeb.createAccount();
                 toHex = account.address.hex;
-                const transaction = await tronWeb.transactionBuilder.sendTrx(account.address.hex, 10e5, accounts.hex[idx]);
+                const transaction = await tronWeb.transactionBuilder.sendMcash(account.address.hex, 10e5, accounts.hex[idx]);
                 await broadcaster(null, accounts.pks[idx], transaction);
                 await waitChainData('account', account.address.hex);
             });
@@ -688,7 +688,7 @@ describe('TronWeb.trx', function () {
                 this.timeout(10000);
 
                 const balanceBefore = await tronWeb.trx.getUnconfirmedBalance(accounts.hex[toIdx]);
-                await tronWeb.trx.sendTrx(accounts.hex[toIdx], 10e5, { privateKey: accounts.pks[fromIdx], address: accounts.hex[fromIdx] });
+                await tronWeb.trx.sendMcash(accounts.hex[toIdx], 10e5, { privateKey: accounts.pks[fromIdx], address: accounts.hex[fromIdx] });
                 await waitChainData('balance', accounts.hex[toIdx], balanceBefore);
                 const balanceAfter = await tronWeb.trx.getUnconfirmedBalance(accounts.hex[toIdx]);
                 assert.equal(balanceAfter - balanceBefore, 10e5);
@@ -696,14 +696,14 @@ describe('TronWeb.trx', function () {
 
             it('should throw invalid recipient provided error', async function () {
                 await assertThrow(
-                    tronWeb.trx.sendTrx('notValidAddress', 10e5, { privateKey: accounts.pks[fromIdx] }),
+                    tronWeb.trx.sendMcash('notValidAddress', 10e5, { privateKey: accounts.pks[fromIdx] }),
                     'Invalid recipient provided'
                 );
             });
 
             it('should throw invalid amount provided error', async function () {
                 await assertThrow(
-                    tronWeb.trx.sendTrx(accounts.hex[18], -1, { privateKey: accounts.pks[fromIdx] }),
+                    tronWeb.trx.sendMcash(accounts.hex[18], -1, { privateKey: accounts.pks[fromIdx] }),
                     'Invalid amount provided'
                 );
             });
@@ -1173,21 +1173,21 @@ describe('TronWeb.trx', function () {
             it('should get token by name', async function () {
                 const tokens = await tronWeb.trx.listTokens(5, 0);
                 for (let token of tokens) {
-                    const tk = await tronWeb.trx.getTokenFromID(token.id);
+                    const tk = await tronWeb.trx.getTokenFromId(token.id);
                     assert.equal(tk.id, token.id);
                 }
             });
 
             it('should throw invalid token ID provided error', async function () {
                 await assertThrow(
-                    tronWeb.trx.getTokenFromID({}),
+                    tronWeb.trx.getTokenFromId({}),
                     'Invalid token ID provided'
                 );
             });
 
             it('should throw token does not exist error', async function () {
                 await assertThrow(
-                    tronWeb.trx.getTokenFromID(1234565),
+                    tronWeb.trx.getTokenFromId(1234565),
                     'Token does not exist'
                 );
             });

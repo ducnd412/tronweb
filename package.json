@@ -1,6 +1,6 @@
 {
     "name": "mcashweb",
-    "version": "2.5.7-beta9",
+    "version": "2.5.7-beta11",
     "description": "JavaScript SDK that encapsulates the MCASH Node HTTP API",
     "main": "dist/McashWeb.node.js",
     "scripts": {
